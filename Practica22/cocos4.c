@@ -320,11 +320,11 @@ void *mou_menjacocos(void *n)
   while (*p_sharedMemory == -1)
   {
     //fprintf(stderr,"Antes de escoger tecla\n");
-    wait(id_sem);
+    waitS(id_sem);
     tec = win_gettec();
     signalS(id_sem);
     if (tec != 0)
-    wait(id_sem);
+    waitS(id_sem);
     switch (tec)		/* modificar direccio menjacocos segons tecla */
     {
       case TEC_AMUNT:	  elementos[0].d = 0; break;
@@ -336,12 +336,12 @@ void *mou_menjacocos(void *n)
     signalS(id_sem);
     seg.f = elementos[0].f + df[elementos[0].d];	/* calcular seguent posicio */
     seg.c = elementos[0].c + dc[elementos[0].d];
-    wait(id_sem);
+    waitS(id_sem);
     seg.a = win_quincar(seg.f,seg.c);	/* calcular caracter seguent posicio */
     signalS(id_sem);
     if ((seg.a == ' ') || (seg.a == '.'))
     {
-      wait(id_sem);
+      waitS(id_sem);
       win_escricar(elementos[0].f,elementos[0].c,' ',NO_INV);		/* esborra posicio anterior */
       elementos[0].f = seg.f; elementos[0].c = seg.c;			/* actualitza posicio */
       elementos[0].a = win_quincar(seg.f,seg.c); 
@@ -350,7 +350,7 @@ void *mou_menjacocos(void *n)
       if (seg.a == '.')
       {
 	      cocos--;
-        wait(id_sem);
+        waitS(id_sem);
 	      sprintf(strin,"Cocosno s: %d", cocos); win_escristr(strin);
 	      if (cocos == 0) *p_sharedMemory = 0;
         signalS(id_sem);
@@ -423,7 +423,6 @@ int main(int n_args, const char *ll_args[])
 
    printf("Hay %d elementos[indice]\n", totalElem);
    sprintf(idSM_str, "%i", id_sharedMemory);
-   fprintf(stderr, "memoria %s",idSM_str );
    i=0;
 
     sprintf(a1,"%i",id_win);
