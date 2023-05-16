@@ -18,7 +18,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-struct semun {
+union semun {
 	int val;
 	struct semid_ds *buf;
 	ushort *array;

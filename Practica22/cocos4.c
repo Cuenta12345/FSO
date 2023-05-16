@@ -75,6 +75,7 @@ Inicia pero no arranca
 #include <sys/wait.h>
 #include "memoria.h"
 #include <pthread.h>
+#include "semafor.h"
 
 
 #define MIN_FIL 7		/* definir limits de variables globals */
@@ -138,6 +139,9 @@ LA SIGUIENTE VARIABLE NOS SERVIRA PARA DEFINIR SI SE ACABO EL JUEGO O NO Y PUEDE
 int condicion = -1;
 
 int *p_sharedMemory, id_sharedMemory;
+
+
+int id_sem = 0;
 /* funcio per realitzar la carrega dels parametres de joc emmagatzemats */
 /* dins d'un fitxer de text, el nom del qual es passa per referencia a  */
 /* 'nom_fit'; si es detecta algun problema, la funcio avorta l'execucio */
@@ -316,8 +320,11 @@ void *mou_menjacocos(void *n)
   while (*p_sharedMemory == -1)
   {
     //fprintf(stderr,"Antes de escoger tecla\n");
+    wait(id_sem);
     tec = win_gettec();
+    signalS(id_sem);
     if (tec != 0)
+    wait(id_sem);
     switch (tec)		/* modificar direccio menjacocos segons tecla */
     {
       case TEC_AMUNT:	  elementos[0].d = 0; break;
@@ -326,22 +333,27 @@ void *mou_menjacocos(void *n)
       case TEC_DRETA:	  elementos[0].d = 3; break;
       case TEC_RETURN:  *p_sharedMemory = 2; break;
     }
-
+    signalS(id_sem);
     seg.f = elementos[0].f + df[elementos[0].d];	/* calcular seguent posicio */
     seg.c = elementos[0].c + dc[elementos[0].d];
+    wait(id_sem);
     seg.a = win_quincar(seg.f,seg.c);	/* calcular caracter seguent posicio */
+    signalS(id_sem);
     if ((seg.a == ' ') || (seg.a == '.'))
     {
+      wait(id_sem);
       win_escricar(elementos[0].f,elementos[0].c,' ',NO_INV);		/* esborra posicio anterior */
       elementos[0].f = seg.f; elementos[0].c = seg.c;			/* actualitza posicio */
       elementos[0].a = win_quincar(seg.f,seg.c); 
       win_escricar(elementos[0].f,elementos[0].c,'0',NO_INV);		/* redibuixa menjacocos */
+      signalS(id_sem);
       if (seg.a == '.')
       {
 	      cocos--;
-
+        wait(id_sem);
 	      sprintf(strin,"Cocosno s: %d", cocos); win_escristr(strin);
 	      if (cocos == 0) *p_sharedMemory = 0;
+        signalS(id_sem);
 
       }
     }
@@ -364,9 +376,9 @@ int main(int n_args, const char *ll_args[])
   srand(getpid());		/* inicialitza numeros aleatoris */
   char object_str[100];
   char idSM_str[10];
-  char a1[20], a2[20], a3[20];
+  char a1[20], a2[20], a3[20], a4[20];
   void *p_win;
-  int id_win;
+  int id_win = 0;
 
   if ((n_args != 2) && (n_args !=3))
   {	
@@ -399,6 +411,8 @@ int main(int n_args, const char *ll_args[])
     id_win = ini_mem(rc);	/* crear zona mem. compartida */
     p_win = map_mem(id_win);	/* obtenir adres. de mem. compartida */
 
+    id_sem = ini_sem(1); /*Crear semaforo*/
+
     win_set(p_win,n_fil1,n_col);		/* crea acces a finestra oberta */
 
     inicialitza_joc();
@@ -411,6 +425,12 @@ int main(int n_args, const char *ll_args[])
    sprintf(idSM_str, "%i", id_sharedMemory);
    fprintf(stderr, "memoria %s",idSM_str );
    i=0;
+
+    sprintf(a1,"%i",id_win);
+    sprintf(a2,"%i",n_fil1);
+    sprintf(a3,"%i",n_col);
+    sprintf(a4,"%i",id_sem);
+
    while(i<totalElem)
    {
     if (i==0)
@@ -421,20 +441,22 @@ int main(int n_args, const char *ll_args[])
       if (tpid[i] == (pid_t) 0)		/* branca del fill */
       {
         sprintf(object_str, "%d,%d,%d,%.2f,%c", elementos[i].f, elementos[i].c, elementos[i].d, elementos[i].r, elementos[i].a);
-        sprintf(a1,"%i",id_win);
-        sprintf(a2,"%i",n_fil1);
-        sprintf(a3,"%i",n_col);
         /*
         PARAMETROS A ENVIAR
         PARAM0 --> Nombre del programa
         PARAM1 --> Objecto fantasma
         PARAM2 --> Retardo
         PARAM3 --> Id de la memoria comaprtida
+        PARAM4 --> Id de campo
+        PARAM5 --> Filas
+        PARAM6 --> Columnas
+        PARAM7 --> Semaforo
         */
-        execlp("./Fantasmas3", "Fantasmas3", object_str, ll_args[2], idSM_str, a1, a2, a3, (char *)0);
+        execlp("./Fantasmas3", "Fantasmas3", object_str, ll_args[2], idSM_str, a1, a2, a3, a4, (char *)0);
         fprintf(stderr,"error: no puc executar el process fill \'mp_car\'\n");
         elim_mem(id_sharedMemory);
         elim_mem(id_win);
+        elim_sem(id_sem);
         exit(0);
       }
     }
@@ -474,6 +496,7 @@ else
 {	
   elim_mem(id_sharedMemory);
   elim_mem(id_win);
+  elim_sem(id_sem);
 	switch (rc)
 	{ 
     case -1: fprintf(stderr,"camp de joc ja creat!\n");
@@ -489,5 +512,7 @@ else
   }
 
   elim_mem(id_sharedMemory);
+  elim_mem(id_win);
+  elim_sem(id_sem);
   return(0);
 }
