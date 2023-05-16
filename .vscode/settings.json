@@ -1,6 +1,7 @@
 {
     "C_Cpp.errorSquiggles": "enabled",
     "files.associations": {
-        "winsuport2.h": "c"
+        "winsuport2.h": "c",
+        "sem.h": "c"
     }
 }

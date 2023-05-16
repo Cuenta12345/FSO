@@ -18,11 +18,11 @@
 #include <assert.h>
 #include <stdio.h>
 
-union semun {
-	int 	val;
-	struct semid_ds	*buf;
-	ushort	*array;
-	};
+struct semun {
+	int val;
+	struct semid_ds *buf;
+	ushort *array;
+};
 
 int ini_sem(int valor);
 
