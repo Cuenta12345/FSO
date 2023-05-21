@@ -119,7 +119,7 @@ AHORA VAMOS A DEFINIR LOS THREADS AL IGUAL QUE LOS ELEMENTOS
 */
 pid_t tpid[MAX_ELEMENTOS];		/* taula d'identificadors dels processos fill */
 
-pthread_t threads[1];
+pthread_t thread;
 
 /*
 A CONTINUACION VAMOS A DEFINIR UNA VARIABLE GLOBAL QUE NOS SERVIRA PARA LO SIGUIENTE:
@@ -277,7 +277,6 @@ void inicialitza_joc(void)
               
               for(int z=1; z<totalElem;z++)
               {
-                printf("Numero de fantasma a pintar %d", z);
                 win_escricar(elementos[z].f,elementos[z].c,'1',NO_INV);
               }
               
@@ -334,9 +333,9 @@ void *mou_menjacocos(void *n)
       case TEC_RETURN:  *p_sharedMemory = 2; break;
     }
     signalS(id_sem);
+    waitS(id_sem);
     seg.f = elementos[0].f + df[elementos[0].d];	/* calcular seguent posicio */
     seg.c = elementos[0].c + dc[elementos[0].d];
-    waitS(id_sem);
     seg.a = win_quincar(seg.f,seg.c);	/* calcular caracter seguent posicio */
     signalS(id_sem);
     if ((seg.a == ' ') || (seg.a == '.'))
@@ -350,8 +349,8 @@ void *mou_menjacocos(void *n)
       if (seg.a == '.')
       {
 	      cocos--;
-        waitS(id_sem);
 	      sprintf(strin,"Cocosno s: %d", cocos); win_escristr(strin);
+        waitS(id_sem);
 	      if (cocos == 0) *p_sharedMemory = 0;
         signalS(id_sem);
 
@@ -376,12 +375,11 @@ int main(int n_args, const char *ll_args[])
   srand(getpid());		/* inicialitza numeros aleatoris */
   char object_str[100];
   char idSM_str[10];
-  char a1[20], a2[20], a3[20], a4[20];
+  char a1[20], a2[20], a3[20], a4[20], a5[20];
   void *p_win;
   int id_win = 0;
 
-  if ((n_args != 2) && (n_args !=3))
-  {	
+  if ((n_args != 2) && (n_args !=3)){	
     fprintf(stderr,"Comanda: cocos0 fit_param [retard] [numero fantasmas]\n");
   	exit(1);
   }
@@ -421,25 +419,21 @@ int main(int n_args, const char *ll_args[])
     JUSTO CUANDO SE INICIA EL JUEGO Y LOS elementos[indice] ESTAN SOBRE EL TABLERO, SE INICIAN LOS THREADS PARA QUE COMIENCEN A EJECUTARSE 
     */
 
-   printf("Hay %d elementos[indice]\n", totalElem);
-   sprintf(idSM_str, "%i", id_sharedMemory);
-   i=0;
+    sprintf(idSM_str, "%i", id_sharedMemory);
+    i=1;
 
     sprintf(a1,"%i",id_win);
     sprintf(a2,"%i",n_fil1);
     sprintf(a3,"%i",n_col);
     sprintf(a4,"%i",id_sem);
-
-   while(i<totalElem)
-   {
-    if (i==0)
-    {
-      pthread_create(&threads[0],NULL,mou_menjacocos,(void *) NULL);
-    }else{
+    //printf("%d, %d, %d, %f %d", elementos[i].f, elementos[i].c, elementos[i].d, elementos[i].r, elementos[i].a);
+    pthread_create(&thread ,NULL,mou_menjacocos,(void *) NULL);
+    while(i<totalElem){
       tpid[i] = fork();		/* crea un nou proces */
       if (tpid[i] == (pid_t) 0)		/* branca del fill */
-      {
+      { 
         sprintf(object_str, "%d,%d,%d,%.2f,%c", elementos[i].f, elementos[i].c, elementos[i].d, elementos[i].r, elementos[i].a);
+        sprintf(a5,"%i",i);
         /*
         PARAMETROS A ENVIAR
         PARAM0 --> Nombre del programa
@@ -451,51 +445,35 @@ int main(int n_args, const char *ll_args[])
         PARAM6 --> Columnas
         PARAM7 --> Semaforo
         */
-        execlp("./Fantasmas3", "Fantasmas3", object_str, ll_args[2], idSM_str, a1, a2, a3, a4, (char *)0);
+        execlp("./Fantasmas4", "Fantasmas4", object_str, ll_args[2], idSM_str, a1, a2, a3, a4, a5, (char *)0);
         fprintf(stderr,"error: no puc executar el process fill \'mp_car\'\n");
-        elim_mem(id_sharedMemory);
-        elim_mem(id_win);
-        elim_sem(id_sem);
         exit(0);
       }
-    }
     i++;
    }
   /*
    UNA VEZ CREADOS SE REALIZA EL JOIN PARA QUE ESPERAR A QUE ACABEN 
    */
-  i=0;
+  pthread_join(thread, (void *) NULL);
+  i=1;
   while(i<totalElem)
   {
-    if (i==0)
-    {
-      pthread_join(threads[i], (void *) NULL);
-    }else{
-       waitpid(tpid[i],NULL,0);	/* espera finalitzacio d'un fill */
-    }
+    waitpid(tpid[i],NULL,0);	/* espera finalitzacio d'un fill */
+    printf("Espero al fill\n");
     i++;
   }
-
-	
-
+  
   win_fi();
 
-  if (*p_sharedMemory == 0)
-  {
+  if (*p_sharedMemory == 0){
     printf("EL JUGADOR GANO\n");
-  }else if (*p_sharedMemory == 1)
-  {
+  }else if (*p_sharedMemory == 1){
     printf("VAYA LOS FANTASMAS GANARON\n");
-  }else if (*p_sharedMemory == 2)
-  {
+  }else if (*p_sharedMemory == 2){
     printf("EL JUGADOR DETUVO EL JUEGO\n");
   }
-}
-else
-{	
-  elim_mem(id_sharedMemory);
-  elim_mem(id_win);
-  elim_sem(id_sem);
+
+}else{	
 	switch (rc)
 	{ 
     case -1: fprintf(stderr,"camp de joc ja creat!\n");
@@ -508,7 +486,7 @@ else
 		  break;
 	}
 	exit(6);
-  }
+}
 
   elim_mem(id_sharedMemory);
   elim_mem(id_win);
