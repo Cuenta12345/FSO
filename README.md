@@ -1,12 +1,4 @@
 # FSO
-Prácticas FSO
+Los makefile no funcionan por algún motivo que nos hemos podido resolver.
 
-Código proporcionado por la Universidad Rovira i Virgili y modificado por el alumnado 
-
-· Práctica21:
-
-Implementación del juego comecocos usando threads
-
-· Práctica22:
-
-Implementación del juego comecocos usando procesos
+Igualmente estan los comandos para generar los ejecutables, por lo que se pueden copiar y ejecutar en la terminal.
