@@ -43,7 +43,6 @@ int main(int n_args, char *ll_args[])
   SE CONECTA A LA MEMORIA COMPARTIDA Y COMPRUEBA SI ES CORRECTA
   */
   id_sharedMemory = atoi(ll_args[3]);
-  fprintf(stderr, "memoria %d ",id_sharedMemory );
   p_sharedMemory = map_mem(id_sharedMemory);	/* obtenir adres. de mem. compartida */
   if (p_sharedMemory == (int*) -1)
   {   fprintf(stderr,"proces (%d): error en identificador de memoria\n",(int)getpid());
@@ -68,6 +67,7 @@ int main(int n_args, char *ll_args[])
   */
   sscanf(ll_args[1], "%d,%d,%d,%f,%c", &elementos.f, &elementos.c, &elementos.d, &elementos.r, &elementos.a);
   fflush(stdout);
+  int numero = atoi(ll_args[7]);
   while (*p_sharedMemory == -1)
   {
     nd = 0;
@@ -108,7 +108,7 @@ int main(int n_args, char *ll_args[])
       seg.a = win_quincar(seg.f,seg.c);	/* calcular caracter seguent posicio */
       win_escricar(elementos.f,elementos.c,elementos.a,NO_INV);	/* esborra posicio anterior */
       elementos.f = seg.f; elementos.c = seg.c; elementos.a = seg.a;	/* actualitza posicio */
-      win_escricar(elementos.f,elementos.c, (char)('1'),NO_INV);		/* redibuixa fantasma */
+      win_escricar(elementos.f,elementos.c, (char)('0'+numero),NO_INV);		/* redibuixa fantasma */
       if (elementos.a == '0') *p_sharedMemory = 1;		/* ha capturat menjacocos */
       
     }

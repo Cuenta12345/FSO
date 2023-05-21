@@ -364,7 +364,7 @@ int main(int n_args, const char *ll_args[])
   srand(getpid());		/* inicialitza numeros aleatoris */
   char object_str[100];
   char idSM_str[10];
-  char a1[20], a2[20], a3[20];
+  char a1[20], a2[20], a3[20], a4[20];
   void *p_win;
   int id_win;
 
@@ -406,10 +406,7 @@ int main(int n_args, const char *ll_args[])
     /*
     JUSTO CUANDO SE INICIA EL JUEGO Y LOS elementos[indice] ESTAN SOBRE EL TABLERO, SE INICIAN LOS THREADS PARA QUE COMIENCEN A EJECUTARSE 
     */
-
-   printf("Hay %d elementos[indice]\n", totalElem);
    sprintf(idSM_str, "%i", id_sharedMemory);
-   fprintf(stderr, "memoria %s",idSM_str );
    i=0;
    while(i<totalElem)
    {
@@ -424,6 +421,7 @@ int main(int n_args, const char *ll_args[])
         sprintf(a1,"%i",id_win);
         sprintf(a2,"%i",n_fil1);
         sprintf(a3,"%i",n_col);
+        sprintf(a4,"%i",i);
         /*
         PARAMETROS A ENVIAR
         PARAM0 --> Nombre del programa
@@ -431,7 +429,7 @@ int main(int n_args, const char *ll_args[])
         PARAM2 --> Retardo
         PARAM3 --> Id de la memoria comaprtida
         */
-        execlp("./Fantasmas3", "Fantasmas3", object_str, ll_args[2], idSM_str, a1, a2, a3, (char *)0);
+        execlp("./Fantasmas3", "Fantasmas3", object_str, ll_args[2], idSM_str, a1, a2, a3, a4, (char *)0);
         fprintf(stderr,"error: no puc executar el process fill \'mp_car\'\n");
         elim_mem(id_sharedMemory);
         elim_mem(id_win);
